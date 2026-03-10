@@ -1,0 +1,8 @@
+userschema.pre
+userschema.post
+
+host=redis-11081.crce206.ap-south-1-1.ec2.cloud.redislabs.com
+port=11081
+password=lBMDtqMYrKQKUg8WClQ1xDO4FAGT8xI6
+
+npm i ioredis
