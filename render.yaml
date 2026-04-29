@@ -1,0 +1,37 @@
+services:
+  - type: web
+    runtime: node
+    name: moodify
+    plan: free
+    region: singapore
+    repo: https://github.com/soumya009-create/AI_SONG_DETECTOR.git
+    branch: main
+    buildCommand: |
+      cd frontend
+      npm install
+      npm run build
+      cd ../backend
+      npm install
+    startCommand: cd backend && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        sync: false
+      - key: REDIS_USERNAME
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: PRIVATE_KEY
+        sync: false

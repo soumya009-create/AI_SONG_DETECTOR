@@ -4,6 +4,13 @@ const UserModel=require('../models/user.model')
 // const blackListModel=require("../models/blacklist.model")
 const redis=require('../config/cache')
 
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+    httpOnly: true,
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction
+}
+
 
 async function register(req,res){
         const {username,email,password}=req.body
@@ -35,7 +42,7 @@ async function register(req,res){
             expiresIn:"3d"
         })
 
-        res.cookie("token",token)
+        res.cookie("token",token,cookieOptions)
 
 
         return res.status(201).json({
@@ -67,7 +74,7 @@ async function login(req,res){
         username:user.username
     },process.env.JWT_SECRET,{expiresIn:"3d"})
 
-    res.cookie("token",token)
+    res.cookie("token",token,cookieOptions)
 
     return res.status(200).json({
         message:"logged in successfully  & token generated",
@@ -87,7 +94,7 @@ async function get_me(req,res){
 
 async function Logout(req,res){
     const token=req.cookies.token
-    res.clearCookie("token")
+    res.clearCookie("token",cookieOptions)
     await redis.set(token,Date.now().toString())
    
     return res.status(200).json({

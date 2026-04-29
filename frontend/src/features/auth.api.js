@@ -1,9 +1,12 @@
 import axios from "axios";
 
-const baseApi=axios.create({
-    baseURL:"http://localhost:3000/api",
-    withCredentials:true
-})
+const apiBaseUrl =
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:3000" : "");
+
+const baseApi = axios.create({
+  baseURL: `${apiBaseUrl}/api`,
+  withCredentials: true,
+});
 
 export async function Register(username,email,password){
     try{
