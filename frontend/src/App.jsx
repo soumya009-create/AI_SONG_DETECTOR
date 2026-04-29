@@ -5,11 +5,11 @@ import SongContextprovider from './features/songs/SongContext'
 
 const App = () => {
   return (
-     <AuthContext>
-    <SongContextprovider>
-    <Routee/>
-    </SongContextprovider>
-     </AuthContext>
+    <AuthContext>
+      <SongContextprovider>
+        <Routee />
+      </SongContextprovider>
+    </AuthContext>
   )
 }
 

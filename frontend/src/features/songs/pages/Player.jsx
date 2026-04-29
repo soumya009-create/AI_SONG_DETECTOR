@@ -1,23 +1,25 @@
-import React, { useRef, useState, useContext, useEffect } from "react";
-import { Songcontext } from "../SongContext";
+import React, { useEffect, useRef, useState } from "react";
 import useSong from "../hooks/usesong";
 
 const Player = () => {
-  const audioRef = useRef(null); // Reference to the audio element
+  const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Access song data from SongContext
-  const { song } = useSong();
+  const { song, loading } = useSong();
+  const hasSong = Boolean(song?.url);
 
-  // Play the audio
-  const handlePlay = () => {
+  const handlePlay = async () => {
     if (audioRef.current) {
-      audioRef.current.play();
-      setIsPlaying(true);
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.error("Audio playback failed:", error);
+        setIsPlaying(false);
+      }
     }
   };
 
-  // Pause the audio
   const handlePause = () => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -25,83 +27,116 @@ const Player = () => {
     }
   };
 
-  // Skip forward by 10 seconds
   const handleForward = () => {
     if (audioRef.current) {
       audioRef.current.currentTime += 10;
     }
   };
 
-  // Skip backward by 10 seconds
   const handleBackward = () => {
     if (audioRef.current) {
       audioRef.current.currentTime -= 10;
     }
   };
 
-  // 🔴 Load and play new song when song changes
   useEffect(() => {
-    if (audioRef.current && song.url) {
+    if (audioRef.current && song?.url) {
       audioRef.current.src = song.url;
-      audioRef.current.load(); // 🔴 Reload the audio element
-      audioRef.current.play(); // 🔴 Auto-play the new song
-      setIsPlaying(true);
+      audioRef.current.load();
+      audioRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch((error) => {
+          console.error("Auto-play failed:", error);
+          setIsPlaying(false);
+        });
+    } else {
+      setIsPlaying(false);
     }
-  }, [song]); // Run this effect when song changes
+  }, [song]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-gray-100 rounded-lg shadow-lg max-w-sm mx-auto">
-      {/* Song Poster */}
-      <div className="mb-4">
-        <img
-          src={song.posterurl || "https://via.placeholder.com/300"} // Fallback for poster URL
-          alt={song.title || "No Title"}
-          className="w-full rounded-lg"
-        />
+    <div className="space-y-5">
+      <div className="overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(155deg,rgba(8,47,73,0.92),rgba(15,23,42,0.96)),radial-gradient(circle_at_top,rgba(34,211,238,0.2),transparent_35%)]">
+        {song?.posterurl ? (
+          <img
+            src={song.posterurl}
+            alt={song.title || "Selected song artwork"}
+            className="aspect-[4/3] w-full object-cover"
+          />
+        ) : (
+          <div className="flex aspect-[4/3] items-end p-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/70">
+                Artwork
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold text-white">
+                {loading ? "Matching a track..." : "Waiting for a mood match"}
+              </h3>
+              <p className="mt-2 max-w-xs text-sm leading-6 text-slate-200/75">
+                Capture a mood from the detector and the player will populate with
+                the next recommendation.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Song Title */}
-      <h2 className="text-xl font-bold text-gray-800 mt-2">
-        {song.title || "No Title"}
-      </h2>
+      <div className="surface-subtle p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.2em] text-slate-400">
+              Now playing
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold text-white">
+              {song?.title || "Waiting for a match"}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              {loading
+                ? "Curating a song for the latest detected mood."
+                : hasSong
+                  ? "A matching track is loaded. Use the controls below to play, pause, or skip."
+                  : "Detect a mood to load a matching track into the player."}
+            </p>
+          </div>
 
-      {/* Audio Player */}
-      <div className="w-full">
-        <audio ref={audioRef} className="w-full">
-          <source src={song.url || ""} type="audio/mpeg" /> {/* Fallback for song URL */}
+          <div className="inline-flex w-max items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100">
+            {loading ? "Loading" : hasSong ? "Track ready" : "Standby"}
+          </div>
+        </div>
+
+        <audio ref={audioRef} className="hidden">
+          <source src={song?.url || ""} type="audio/mpeg" />
           Your browser does not support the audio element.
         </audio>
-      </div>
 
-      {/* Controls */}
-      <div className="flex justify-between items-center w-full mt-4">
-        <button
-          onClick={handleBackward}
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-        >
-          ⏪ 10s
-        </button>
-        {isPlaying ? (
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <button
-            onClick={handlePause}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            onClick={handleBackward}
+            className="secondary-button w-full"
+            disabled={!hasSong}
           >
-            ⏸ Pause
+            Back 10s
           </button>
-        ) : (
+
           <button
-            onClick={handlePlay}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            onClick={isPlaying ? handlePause : handlePlay}
+            className="primary-button w-full"
+            disabled={!hasSong}
           >
-            ▶ Play
+            {isPlaying ? "Pause" : "Play"}
           </button>
-        )}
-        <button
-          onClick={handleForward}
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-        >
-          10s ⏩
-        </button>
+
+          <button
+            onClick={handleForward}
+            className="secondary-button w-full"
+            disabled={!hasSong}
+          >
+            Forward 10s
+          </button>
+        </div>
       </div>
     </div>
   );
